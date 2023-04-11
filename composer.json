@@ -1,5 +1,5 @@
 {
-    "name": "appwrite/php-clamav",
+    "name": "davintoo/php-clamav",
     "description": "ClamAV network and pipe client for PHP",
     "type": "library",
     "keywords": ["php", "clamav", "anti virus", "appwrite"],
