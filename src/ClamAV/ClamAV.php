@@ -111,4 +111,39 @@ abstract class ClamAV
 
         return $return;
     }
+
+    /**
+     * Scan a file or a directory (recursively) with archive support
+     * enabled (if not disabled in clamd.conf). A full path is required.
+     *
+     * Returns whether the given file/directory is clean (true), or not (false).
+     *
+     * @param string $file
+     * @return bool
+     */
+    public function fileScanInStream(string $file): bool
+    {
+        $socket = $this->getSocket();
+
+        $handle = \fopen($file, 'rb');
+        $chunkSize = \filesize($file) < 8192 ? \filesize($file) : 8192;
+        $command = "zINSTREAM\0";
+
+        \socket_send($socket, $command, \strlen($command), 0);
+
+        while (!\feof($handle)) {
+            $data = \fread($handle, $chunkSize);
+            $packet = \pack(\sprintf("Na%d", $chunkSize), $chunkSize, $data);
+            \socket_send($socket, $packet, $chunkSize + 4, 0);
+        }
+
+        \socket_send($socket, \pack("Nx", 0), 5, 0);
+        \socket_recv($socket, $out, 20000, 0);
+        \socket_close($socket);
+
+        $out = \explode(':', $out);
+        $stats = \end($out);
+
+        return \trim($stats) === 'OK';
+    }
 }
